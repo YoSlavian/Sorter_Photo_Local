@@ -1,0 +1,8 @@
+Employee onboarding
+
+The process starts when a signed offer is received.
+The recruiter creates the employee record in the HR system.
+In parallel the IT department prepares the workplace and the manager prepares the onboarding plan.
+If the workplace is ready, then the manager schedules the first working day, otherwise the IT department orders the missing equipment.
+After that the recruiter sends the welcome letter to the employee.
+The process ends.

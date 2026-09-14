@@ -1,0 +1,53 @@
+"""Domain layer: the BPMN process model and the parser-facing IR."""
+
+from bpmn_architect.domain.ir import (
+    ActivityType,
+    BranchType,
+    EventPosition,
+    EventTrigger,
+    IRActivity,
+    IRArm,
+    IRBranch,
+    IRElement,
+    IREvent,
+    IRGoto,
+    IRLane,
+    IRParallel,
+    IRProcess,
+    IRSequence,
+    walk,
+)
+from bpmn_architect.domain.model import (
+    EventDefinition,
+    Flow,
+    GatewayDirection,
+    Lane,
+    Node,
+    NodeKind,
+    ProcessModel,
+)
+
+__all__ = [
+    "ActivityType",
+    "BranchType",
+    "EventDefinition",
+    "EventPosition",
+    "EventTrigger",
+    "Flow",
+    "GatewayDirection",
+    "IRActivity",
+    "IRArm",
+    "IRBranch",
+    "IRElement",
+    "IREvent",
+    "IRGoto",
+    "IRLane",
+    "IRParallel",
+    "IRProcess",
+    "IRSequence",
+    "Lane",
+    "Node",
+    "NodeKind",
+    "ProcessModel",
+    "walk",
+]

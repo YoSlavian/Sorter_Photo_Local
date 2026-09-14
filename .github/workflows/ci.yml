@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install
+        run: python -m pip install --upgrade pip && pip install -e ".[dev]"
+
+      - name: Lint
+        run: ruff check src tests
+
+      - name: Type check
+        run: mypy
+
+      - name: Test
+        run: pytest -q
+
+      - name: Diagrams are reproducible
+        run: |
+          python -m bpmn_architect build examples/order_request.ru.txt -o /tmp/a.svg -f svg -q
+          python -m bpmn_architect build examples/invoice_approval.dsl -o /tmp/b.svg -f svg -q
+          diff -q /tmp/a.svg docs/images/order_request.svg
+          diff -q /tmp/b.svg docs/images/invoice_approval.svg
