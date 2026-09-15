@@ -5,6 +5,7 @@ Three verbs, matching the three questions a modeller asks:
 ``build``     — give me the diagram;
 ``validate``  — is my description structurally sound?
 ``explain``   — how did you understand what I wrote?
+``studio``    — open the visual editor in a browser.
 """
 
 from __future__ import annotations
@@ -99,6 +100,12 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers.add_parser(
         "explain", parents=[common], help="show how the description was interpreted"
     )
+
+    studio = subparsers.add_parser("studio", help="run BPMN Architect Studio in a browser")
+    studio.add_argument("--host", default="127.0.0.1", help="interface to bind (default: %(default)s)")
+    studio.add_argument("--port", type=int, default=8000, help="port to bind (default: %(default)s)")
+    studio.add_argument("--no-browser", action="store_true", help="do not open a browser")
+    studio.add_argument("--reload", action="store_true", help="reload on code changes (development)")
     return parser
 
 
@@ -199,6 +206,41 @@ def _command_explain(args: argparse.Namespace) -> int:
     return _EXIT_OK
 
 
+def _command_studio(args: argparse.Namespace) -> int:
+    try:
+        import uvicorn
+
+        from bpmn_architect.server.app import create_app, static_directory
+    except ImportError:
+        print(
+            'error: Studio needs its extra; run: pip install "bpmn-architect[studio]"',
+            file=sys.stderr,
+        )
+        return _EXIT_USAGE
+
+    url = f"http://{'localhost' if args.host in {'0.0.0.0', '127.0.0.1'} else args.host}:{args.port}"
+    if not (static_directory() / "index.html").is_file():
+        print(
+            "note: the built frontend is missing, only the API is served.\n"
+            "      build it with: cd frontend && npm install && npm run build",
+            file=sys.stderr,
+        )
+    print(f"BPMN Architect Studio -> {url}\nAPI documentation      -> {url}/docs")
+    if not args.no_browser:
+        import threading
+        import webbrowser
+
+        threading.Timer(1.0, lambda: webbrowser.open(url)).start()
+
+    if args.reload:
+        uvicorn.run(
+            "bpmn_architect.server.app:app", host=args.host, port=args.port, reload=True
+        )
+    else:
+        uvicorn.run(create_app(), host=args.host, port=args.port, log_level="info")
+    return _EXIT_OK
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
@@ -206,6 +248,7 @@ def main(argv: list[str] | None = None) -> int:
         "build": _command_build,
         "validate": _command_validate,
         "explain": _command_explain,
+        "studio": _command_studio,
     }
     try:
         return commands[args.command](args)

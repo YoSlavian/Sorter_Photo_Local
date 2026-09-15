@@ -79,19 +79,30 @@ class SourceMap:
 
 
 def build_source_map(model: ProcessModel, text: str) -> SourceMap:
-    """Locate every element of ``model`` inside ``text``."""
+    """Locate every element of ``model`` inside ``text``.
+
+    Works both for a freshly generated model, where the builder recorded the
+    sentence and its line, and for one imported from a BPMN file, where the
+    same sentence survives in ``bpmn:documentation`` with no line number - the
+    line is then derived from where the sentence was actually found.
+    """
     source_map = SourceMap(text=text)
     line_spans = _line_spans(text)
     cursor = 0
 
+    # Ties are broken by the model's own order, not by id: "Activity_10" sorts
+    # before "Activity_2" lexicographically, which would shuffle the cursor.
+    positions = {node.id: index for index, node in enumerate(model.nodes)}
+    candidates = [node for node in model.nodes if _sentence_of(node)]
     ordered = sorted(
-        (node for node in model.nodes if node.attrs.get("source")),
-        key=lambda node: (int(node.attrs.get("line", "0") or 0), node.id),
+        candidates,
+        key=lambda node: (int(node.attrs.get("line", "0") or 0), positions[node.id]),
     )
     for node in ordered:
-        sentence = node.attrs["source"].strip()
-        line = int(node.attrs.get("line", "0") or 0)
-        start, end, exact = _locate(text, sentence, cursor, line, line_spans)
+        sentence = _sentence_of(node)
+        recorded_line = int(node.attrs.get("line", "0") or 0)
+        start, end, exact = _locate(text, sentence, cursor, recorded_line, line_spans)
+        line = _line_at(start, line_spans) if exact else recorded_line
         source_map.spans[node.id] = SourceSpan(
             element_id=node.id,
             sentence=sentence,
@@ -103,6 +114,19 @@ def build_source_map(model: ProcessModel, text: str) -> SourceMap:
         if exact:
             cursor = start + 1
     return source_map
+
+
+def _sentence_of(node: object) -> str:
+    """The originating sentence, however the model carries it."""
+    attrs = getattr(node, "attrs", {})
+    return str(attrs.get("source") or getattr(node, "documentation", "") or "").strip()
+
+
+def _line_at(offset: int, line_spans: list[tuple[int, int]]) -> int:
+    for index, (start, end) in enumerate(line_spans, start=1):
+        if start <= offset <= end:
+            return index
+    return 0
 
 
 def _locate(

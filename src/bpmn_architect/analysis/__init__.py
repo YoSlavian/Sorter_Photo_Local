@@ -6,10 +6,12 @@ from bpmn_architect.analysis.ambiguity import (
     analyse_ambiguity,
     apply_clarifications,
 )
+from bpmn_architect.analysis.narrate import narrate
 
 __all__ = [
     "Clarification",
     "ClarificationOption",
     "analyse_ambiguity",
     "apply_clarifications",
+    "narrate",
 ]
