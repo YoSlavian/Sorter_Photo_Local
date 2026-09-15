@@ -1,0 +1,145 @@
+/*
+ * Design tokens.
+ *
+ * The target is a desktop developer tool, not a landing page: dense
+ * typography, hairline borders, small radii, one restrained accent, and no
+ * gradient anywhere. Everything that is not the diagram is deliberately quiet,
+ * because the diagram is what the user came to look at.
+ */
+
+:root {
+  color-scheme: light;
+
+  /* Surfaces, from the deepest chrome to the lightest sheet. */
+  --bg-app: #f4f5f7;
+  --bg-panel: #ffffff;
+  --bg-sunken: #eceef1;
+  --bg-canvas: #fbfbfc;
+  --bg-hover: #e8eaed;
+  --bg-active: #dde1e6;
+
+  --border: #d8dbe0;
+  --border-strong: #c2c7ce;
+
+  --text: #1c1f24;
+  --text-muted: #61666e;
+  --text-faint: #8b9098;
+  --text-inverse: #ffffff;
+
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+  --accent-soft: #e5edff;
+  --accent-border: #a8c1ff;
+
+  --danger: #c0392b;
+  --danger-soft: #fdecea;
+  --warning: #a86616;
+  --warning-soft: #fdf3e3;
+  --success: #1f7a4d;
+  --success-soft: #e6f4ec;
+  --info: #2563eb;
+  --info-soft: #e5edff;
+
+  --shadow-panel: 0 1px 2px rgb(16 24 40 / 6%);
+  --shadow-float: 0 8px 24px rgb(16 24 40 / 12%);
+
+  --radius: 5px;
+  --radius-lg: 8px;
+
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue',
+    Arial, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas,
+    monospace;
+  --size-xs: 11px;
+  --size-sm: 12px;
+  --size-base: 13px;
+  --size-lg: 15px;
+
+  --toolbar-height: 44px;
+  --statusbar-height: 26px;
+  --left-width: 232px;
+  --right-width: 318px;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --bg-app: #16181d;
+  --bg-panel: #1c1f26;
+  --bg-sunken: #121419;
+  --bg-canvas: #21242b;
+  --bg-hover: #262a33;
+  --bg-active: #2f343f;
+
+  --border: #2c313a;
+  --border-strong: #3c424e;
+
+  --text: #e6e8ec;
+  --text-muted: #a0a6b0;
+  --text-faint: #767d89;
+  --text-inverse: #0f1115;
+
+  --accent: #6b9bff;
+  --accent-hover: #86afff;
+  --accent-soft: #1e2942;
+  --accent-border: #33497a;
+
+  --danger: #f08a80;
+  --danger-soft: #331e1c;
+  --warning: #e0b263;
+  --warning-soft: #2e2618;
+  --success: #6dc79a;
+  --success-soft: #16271f;
+  --info: #6b9bff;
+  --info-soft: #1e2942;
+
+  --shadow-panel: 0 1px 2px rgb(0 0 0 / 40%);
+  --shadow-float: 0 8px 24px rgb(0 0 0 / 50%);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: var(--font);
+  font-size: var(--size-base);
+  line-height: 1.45;
+  color: var(--text);
+  background: var(--bg-app);
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border: 3px solid transparent;
+  background-clip: content-box;
+  border-radius: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}

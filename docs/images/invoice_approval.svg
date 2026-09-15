@@ -1,86 +1,86 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1658" height="576" viewBox="0 0 1658 576" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-size="11">
+<svg xmlns="http://www.w3.org/2000/svg" width="1730" height="576" viewBox="0 0 1730 576" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-size="11">
 <defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#3a3f4b"/></marker></defs>
 <rect width="100%" height="100%" fill="#ffffff"/>
 <g transform="translate(-136,-46)">
-<rect x="160" y="80" width="1610" height="518" fill="none" stroke="#3a3f4b" stroke-width="1.6"/>
-<rect x="190" y="80" width="1580" height="262" fill="#fbfbfc" stroke="#3a3f4b" stroke-width="1"/>
+<rect x="160" y="80" width="1682" height="518" fill="none" stroke="#3a3f4b" stroke-width="1.6"/>
+<rect x="190" y="80" width="1652" height="262" fill="#fbfbfc" stroke="#3a3f4b" stroke-width="1"/>
 <text x="175" y="211" text-anchor="middle" transform="rotate(-90 175 211)" fill="#3a3f4b">Бухгалтер</text>
-<rect x="190" y="342" width="1580" height="128" fill="#fbfbfc" stroke="#3a3f4b" stroke-width="1"/>
+<rect x="190" y="342" width="1652" height="128" fill="#fbfbfc" stroke="#3a3f4b" stroke-width="1"/>
 <text x="175" y="406" text-anchor="middle" transform="rotate(-90 175 406)" fill="#3a3f4b">Руководитель</text>
-<rect x="190" y="470" width="1580" height="128" fill="#fbfbfc" stroke="#3a3f4b" stroke-width="1"/>
+<rect x="190" y="470" width="1652" height="128" fill="#fbfbfc" stroke="#3a3f4b" stroke-width="1"/>
 <text x="175" y="534" text-anchor="middle" transform="rotate(-90 175 534)" fill="#3a3f4b">Казначейство</text>
-<polyline points="250,181.5 310,181.5" fill="none" stroke="#3a3f4b" stroke-width="1.4" marker-end="url(#arrow)"/>
-<polyline points="410,181.5 470,181.5" fill="none" stroke="#3a3f4b" stroke-width="1.4" marker-end="url(#arrow)"/>
-<polyline points="570,181.5 630,181.5" fill="none" stroke="#3a3f4b" stroke-width="1.4" marker-end="url(#arrow)"/>
-<polyline points="655,156.5 655,129 765,129" fill="none" stroke="#3a3f4b" stroke-width="1.4" marker-end="url(#arrow)"/>
-<text x="676" y="147.8" text-anchor="middle" fill="#1f6feb">Да</text>
-<polyline points="790,154 790,406 900,406" fill="none" stroke="#3a3f4b" stroke-width="1.4" marker-end="url(#arrow)"/>
-<text x="811" y="285" text-anchor="middle" fill="#1f6feb">Да</text>
-<polyline points="815,129 857.5,129 857.5,144 900,144" fill="none" stroke="#3a3f4b" stroke-width="1.4" marker-end="url(#arrow)" stroke-dasharray="6 4"/>
-<text x="836.2" y="123" text-anchor="middle" fill="#1f6feb">Нет</text>
-<polyline points="1000,406 1030,406 1030,391 1060,391" fill="none" stroke="#3a3f4b" stroke-width="1.4" marker-end="url(#arrow)"/>
-<polyline points="1000,144 1085,144 1085,366" fill="none" stroke="#3a3f4b" stroke-width="1.4" marker-end="url(#arrow)"/>
-<polyline points="1110,391 1170,391" fill="none" stroke="#3a3f4b" stroke-width="1.4" marker-end="url(#arrow)"/>
-<polyline points="1195,416 1195,534 1280,534" fill="none" stroke="#3a3f4b" stroke-width="1.4" marker-end="url(#arrow)"/>
-<polyline points="1195,366 1195,234 1280,234" fill="none" stroke="#3a3f4b" stroke-width="1.4" marker-end="url(#arrow)"/>
-<polyline points="1380,534 1410,534 1410,519 1440,519" fill="none" stroke="#3a3f4b" stroke-width="1.4" marker-end="url(#arrow)"/>
-<polyline points="1380,234 1465,234 1465,494" fill="none" stroke="#3a3f4b" stroke-width="1.4" marker-end="url(#arrow)"/>
-<polyline points="1490,519 1520,519 1520,534 1550,534" fill="none" stroke="#3a3f4b" stroke-width="1.4" marker-end="url(#arrow)"/>
-<polyline points="1650,534 1710,534" fill="none" stroke="#3a3f4b" stroke-width="1.4" marker-end="url(#arrow)"/>
-<polyline points="655,206.5 655,234 740,234" fill="none" stroke="#3a3f4b" stroke-width="1.4" marker-end="url(#arrow)" stroke-dasharray="6 4"/>
-<text x="676" y="225.2" text-anchor="middle" fill="#1f6feb">Нет</text>
-<polyline points="840,234 886,234 886,249 932,249" fill="none" stroke="#3a3f4b" stroke-width="1.4" marker-end="url(#arrow)"/>
-<polyline points="950,267 950,324 360,324 360,221.5" fill="none" stroke="#3a3f4b" stroke-width="1.4" marker-end="url(#arrow)"/>
-<circle cx="232" cy="181.5" r="18" fill="#ffffff" stroke="#3a3f4b" stroke-width="1.6"/>
-<text x="232" y="185.5" text-anchor="middle" fill="#3a3f4b" font-size="11">✉</text>
-<text x="232" y="207" text-anchor="middle" fill="#3a3f4b">Счёт поступил от</text>
-<text x="232" y="220" text-anchor="middle" fill="#3a3f4b">поставщика</text>
-<rect x="310" y="141.5" width="100" height="80" rx="8" fill="#ffffff" stroke="#3a3f4b" stroke-width="1.4"/>
-<text x="360" y="179" text-anchor="middle" fill="#3a3f4b">Проверить</text>
-<text x="360" y="192" text-anchor="middle" fill="#3a3f4b">реквизиты счёта</text>
-<rect x="470" y="141.5" width="100" height="80" rx="8" fill="#ffffff" stroke="#3a3f4b" stroke-width="1.4"/>
-<text x="478" y="157.5" fill="#3a3f4b" font-size="11">☷</text>
-<text x="520" y="172.5" text-anchor="middle" fill="#3a3f4b">Проверить счёт</text>
-<text x="520" y="185.5" text-anchor="middle" fill="#3a3f4b">по</text>
-<text x="520" y="198.5" text-anchor="middle" fill="#3a3f4b">бизнес-правилам</text>
-<polygon points="655,156.5 680,181.5 655,206.5 630,181.5" fill="#ffffff" stroke="#3a3f4b" stroke-width="1.4"/>
-<text x="655" y="186.5" text-anchor="middle" fill="#3a3f4b" font-size="14">✕</text>
-<text x="655" y="148.5" text-anchor="middle" fill="#3a3f4b">Счёт корректен?</text>
-<polygon points="790,104 815,129 790,154 765,129" fill="#ffffff" stroke="#3a3f4b" stroke-width="1.4"/>
-<text x="790" y="134" text-anchor="middle" fill="#3a3f4b" font-size="14">✕</text>
-<text x="790" y="96" text-anchor="middle" fill="#3a3f4b">Сумма превышает лимит?</text>
-<rect x="900" y="366" width="100" height="80" rx="8" fill="#ffffff" stroke="#3a3f4b" stroke-width="1.4"/>
-<text x="950" y="410" text-anchor="middle" fill="#3a3f4b">Согласовать счёт</text>
-<rect x="900" y="104" width="100" height="80" rx="8" fill="#ffffff" stroke="#3a3f4b" stroke-width="1.4"/>
-<text x="908" y="120" fill="#3a3f4b" font-size="11">⚙</text>
-<text x="950" y="141.5" text-anchor="middle" fill="#3a3f4b">Согласовать</text>
-<text x="950" y="154.5" text-anchor="middle" fill="#3a3f4b">автоматически</text>
-<polygon points="1085,366 1110,391 1085,416 1060,391" fill="#ffffff" stroke="#3a3f4b" stroke-width="1.4"/>
-<text x="1085" y="396" text-anchor="middle" fill="#3a3f4b" font-size="14">✕</text>
-<polygon points="1195,366 1220,391 1195,416 1170,391" fill="#ffffff" stroke="#3a3f4b" stroke-width="1.4"/>
-<text x="1195" y="396" text-anchor="middle" fill="#3a3f4b" font-size="14">＋</text>
-<rect x="1280" y="494" width="100" height="80" rx="8" fill="#ffffff" stroke="#3a3f4b" stroke-width="1.4"/>
-<text x="1288" y="510" fill="#3a3f4b" font-size="11">⚙</text>
-<text x="1330" y="531.5" text-anchor="middle" fill="#3a3f4b">Зарезервировать</text>
-<text x="1330" y="544.5" text-anchor="middle" fill="#3a3f4b">средства</text>
-<rect x="1280" y="194" width="100" height="80" rx="8" fill="#ffffff" stroke="#3a3f4b" stroke-width="1.4"/>
-<text x="1288" y="210" fill="#3a3f4b" font-size="11">✉</text>
-<text x="1330" y="225" text-anchor="middle" fill="#3a3f4b">Уведомить</text>
-<text x="1330" y="238" text-anchor="middle" fill="#3a3f4b">поставщика о</text>
-<text x="1330" y="251" text-anchor="middle" fill="#3a3f4b">согласовании</text>
-<polygon points="1465,494 1490,519 1465,544 1440,519" fill="#ffffff" stroke="#3a3f4b" stroke-width="1.4"/>
-<text x="1465" y="524" text-anchor="middle" fill="#3a3f4b" font-size="14">＋</text>
-<rect x="1550" y="494" width="100" height="80" rx="8" fill="#ffffff" stroke="#3a3f4b" stroke-width="1.4"/>
-<text x="1600" y="538" text-anchor="middle" fill="#3a3f4b">Оплатить счёт</text>
-<circle cx="1728" cy="534" r="18" fill="#ffffff" stroke="#3a3f4b" stroke-width="3.4"/>
-<text x="1728" y="566" text-anchor="middle" fill="#3a3f4b">Счёт оплачен</text>
-<rect x="740" y="194" width="100" height="80" rx="8" fill="#ffffff" stroke="#3a3f4b" stroke-width="1.4"/>
-<text x="748" y="210" fill="#3a3f4b" font-size="11">✉</text>
-<text x="790" y="231.5" text-anchor="middle" fill="#3a3f4b">Запросить</text>
-<text x="790" y="244.5" text-anchor="middle" fill="#3a3f4b">корректный счёт</text>
-<circle cx="950" cy="249" r="18" fill="#ffffff" stroke="#3a3f4b" stroke-width="1.6"/>
-<circle cx="950" cy="249" r="15" fill="none" stroke="#3a3f4b"/>
-<text x="950" y="253" text-anchor="middle" fill="#3a3f4b" font-size="11">⏱</text>
-<text x="950" y="274.5" text-anchor="middle" fill="#3a3f4b">Ожидание</text>
-<text x="950" y="287.5" text-anchor="middle" fill="#3a3f4b">исправленного счёта</text>
+<polyline points="322,181.5 382,181.5" fill="none" stroke="#3a3f4b" stroke-width="1.4" marker-end="url(#arrow)"/>
+<polyline points="482,181.5 542,181.5" fill="none" stroke="#3a3f4b" stroke-width="1.4" marker-end="url(#arrow)"/>
+<polyline points="642,181.5 702,181.5" fill="none" stroke="#3a3f4b" stroke-width="1.4" marker-end="url(#arrow)"/>
+<polyline points="727,156.5 727,129 837,129" fill="none" stroke="#3a3f4b" stroke-width="1.4" marker-end="url(#arrow)"/>
+<text x="748" y="147.8" text-anchor="middle" fill="#1f6feb">Да</text>
+<polyline points="862,154 862,406 972,406" fill="none" stroke="#3a3f4b" stroke-width="1.4" marker-end="url(#arrow)"/>
+<text x="883" y="285" text-anchor="middle" fill="#1f6feb">Да</text>
+<polyline points="887,129 929.5,129 929.5,144 972,144" fill="none" stroke="#3a3f4b" stroke-width="1.4" marker-end="url(#arrow)" stroke-dasharray="6 4"/>
+<text x="908.2" y="123" text-anchor="middle" fill="#1f6feb">Нет</text>
+<polyline points="1072,406 1102,406 1102,391 1132,391" fill="none" stroke="#3a3f4b" stroke-width="1.4" marker-end="url(#arrow)"/>
+<polyline points="1072,144 1157,144 1157,366" fill="none" stroke="#3a3f4b" stroke-width="1.4" marker-end="url(#arrow)"/>
+<polyline points="1182,391 1242,391" fill="none" stroke="#3a3f4b" stroke-width="1.4" marker-end="url(#arrow)"/>
+<polyline points="1267,416 1267,534 1352,534" fill="none" stroke="#3a3f4b" stroke-width="1.4" marker-end="url(#arrow)"/>
+<polyline points="1267,366 1267,234 1352,234" fill="none" stroke="#3a3f4b" stroke-width="1.4" marker-end="url(#arrow)"/>
+<polyline points="1452,534 1482,534 1482,519 1512,519" fill="none" stroke="#3a3f4b" stroke-width="1.4" marker-end="url(#arrow)"/>
+<polyline points="1452,234 1537,234 1537,494" fill="none" stroke="#3a3f4b" stroke-width="1.4" marker-end="url(#arrow)"/>
+<polyline points="1562,519 1592,519 1592,534 1622,534" fill="none" stroke="#3a3f4b" stroke-width="1.4" marker-end="url(#arrow)"/>
+<polyline points="1722,534 1782,534" fill="none" stroke="#3a3f4b" stroke-width="1.4" marker-end="url(#arrow)"/>
+<polyline points="727,206.5 727,234 812,234" fill="none" stroke="#3a3f4b" stroke-width="1.4" marker-end="url(#arrow)" stroke-dasharray="6 4"/>
+<text x="748" y="225.2" text-anchor="middle" fill="#1f6feb">Нет</text>
+<polyline points="912,234 958,234 958,249 1004,249" fill="none" stroke="#3a3f4b" stroke-width="1.4" marker-end="url(#arrow)"/>
+<polyline points="1022,267 1022,324 432,324 432,221.5" fill="none" stroke="#3a3f4b" stroke-width="1.4" marker-end="url(#arrow)"/>
+<circle cx="304" cy="181.5" r="18" fill="#ffffff" stroke="#3a3f4b" stroke-width="1.6"/>
+<text x="304" y="185.5" text-anchor="middle" fill="#3a3f4b" font-size="11">✉</text>
+<text x="304" y="207" text-anchor="middle" fill="#3a3f4b">Счёт поступил от</text>
+<text x="304" y="220" text-anchor="middle" fill="#3a3f4b">поставщика</text>
+<rect x="382" y="141.5" width="100" height="80" rx="8" fill="#ffffff" stroke="#3a3f4b" stroke-width="1.4"/>
+<text x="432" y="179" text-anchor="middle" fill="#3a3f4b">Проверить</text>
+<text x="432" y="192" text-anchor="middle" fill="#3a3f4b">реквизиты счёта</text>
+<rect x="542" y="141.5" width="100" height="80" rx="8" fill="#ffffff" stroke="#3a3f4b" stroke-width="1.4"/>
+<text x="550" y="157.5" fill="#3a3f4b" font-size="11">☷</text>
+<text x="592" y="172.5" text-anchor="middle" fill="#3a3f4b">Проверить счёт</text>
+<text x="592" y="185.5" text-anchor="middle" fill="#3a3f4b">по</text>
+<text x="592" y="198.5" text-anchor="middle" fill="#3a3f4b">бизнес-правилам</text>
+<polygon points="727,156.5 752,181.5 727,206.5 702,181.5" fill="#ffffff" stroke="#3a3f4b" stroke-width="1.4"/>
+<text x="727" y="186.5" text-anchor="middle" fill="#3a3f4b" font-size="14">✕</text>
+<text x="727" y="148.5" text-anchor="middle" fill="#3a3f4b">Счёт корректен?</text>
+<polygon points="862,104 887,129 862,154 837,129" fill="#ffffff" stroke="#3a3f4b" stroke-width="1.4"/>
+<text x="862" y="134" text-anchor="middle" fill="#3a3f4b" font-size="14">✕</text>
+<text x="862" y="96" text-anchor="middle" fill="#3a3f4b">Сумма превышает лимит?</text>
+<rect x="972" y="366" width="100" height="80" rx="8" fill="#ffffff" stroke="#3a3f4b" stroke-width="1.4"/>
+<text x="1022" y="410" text-anchor="middle" fill="#3a3f4b">Согласовать счёт</text>
+<rect x="972" y="104" width="100" height="80" rx="8" fill="#ffffff" stroke="#3a3f4b" stroke-width="1.4"/>
+<text x="980" y="120" fill="#3a3f4b" font-size="11">⚙</text>
+<text x="1022" y="141.5" text-anchor="middle" fill="#3a3f4b">Согласовать</text>
+<text x="1022" y="154.5" text-anchor="middle" fill="#3a3f4b">автоматически</text>
+<polygon points="1157,366 1182,391 1157,416 1132,391" fill="#ffffff" stroke="#3a3f4b" stroke-width="1.4"/>
+<text x="1157" y="396" text-anchor="middle" fill="#3a3f4b" font-size="14">✕</text>
+<polygon points="1267,366 1292,391 1267,416 1242,391" fill="#ffffff" stroke="#3a3f4b" stroke-width="1.4"/>
+<text x="1267" y="396" text-anchor="middle" fill="#3a3f4b" font-size="14">＋</text>
+<rect x="1352" y="494" width="100" height="80" rx="8" fill="#ffffff" stroke="#3a3f4b" stroke-width="1.4"/>
+<text x="1360" y="510" fill="#3a3f4b" font-size="11">⚙</text>
+<text x="1402" y="531.5" text-anchor="middle" fill="#3a3f4b">Зарезервировать</text>
+<text x="1402" y="544.5" text-anchor="middle" fill="#3a3f4b">средства</text>
+<rect x="1352" y="194" width="100" height="80" rx="8" fill="#ffffff" stroke="#3a3f4b" stroke-width="1.4"/>
+<text x="1360" y="210" fill="#3a3f4b" font-size="11">✉</text>
+<text x="1402" y="225" text-anchor="middle" fill="#3a3f4b">Уведомить</text>
+<text x="1402" y="238" text-anchor="middle" fill="#3a3f4b">поставщика о</text>
+<text x="1402" y="251" text-anchor="middle" fill="#3a3f4b">согласовании</text>
+<polygon points="1537,494 1562,519 1537,544 1512,519" fill="#ffffff" stroke="#3a3f4b" stroke-width="1.4"/>
+<text x="1537" y="524" text-anchor="middle" fill="#3a3f4b" font-size="14">＋</text>
+<rect x="1622" y="494" width="100" height="80" rx="8" fill="#ffffff" stroke="#3a3f4b" stroke-width="1.4"/>
+<text x="1672" y="538" text-anchor="middle" fill="#3a3f4b">Оплатить счёт</text>
+<circle cx="1800" cy="534" r="18" fill="#ffffff" stroke="#3a3f4b" stroke-width="3.4"/>
+<text x="1800" y="566" text-anchor="middle" fill="#3a3f4b">Счёт оплачен</text>
+<rect x="812" y="194" width="100" height="80" rx="8" fill="#ffffff" stroke="#3a3f4b" stroke-width="1.4"/>
+<text x="820" y="210" fill="#3a3f4b" font-size="11">✉</text>
+<text x="862" y="231.5" text-anchor="middle" fill="#3a3f4b">Запросить</text>
+<text x="862" y="244.5" text-anchor="middle" fill="#3a3f4b">корректный счёт</text>
+<circle cx="1022" cy="249" r="18" fill="#ffffff" stroke="#3a3f4b" stroke-width="1.6"/>
+<circle cx="1022" cy="249" r="15" fill="none" stroke="#3a3f4b"/>
+<text x="1022" y="253" text-anchor="middle" fill="#3a3f4b" font-size="11">⏱</text>
+<text x="1022" y="274.5" text-anchor="middle" fill="#3a3f4b">Ожидание</text>
+<text x="1022" y="287.5" text-anchor="middle" fill="#3a3f4b">исправленного счёта</text>
 </g></svg>

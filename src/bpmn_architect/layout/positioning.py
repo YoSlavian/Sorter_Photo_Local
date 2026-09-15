@@ -68,7 +68,9 @@ def assign_positions(
     lane_of.update({v.id: v.lane_id or "" for v in graph.virtual_nodes.values()})
     lanes = lane_order or [""]
 
-    column_x = _column_positions(graph, ordering, sizes, metrics)
+    column_x = _column_positions(
+        graph, ordering, sizes, metrics, has_lanes=bool(lane_order) and lane_order != [""]
+    )
     cells = _cells(ordering, lane_of, lanes)
     reserve = _loop_reserve(model, graph, lane_of, lanes, metrics)
     bands = _lane_bands(cells, sizes, lanes, reserve, metrics)
@@ -119,8 +121,16 @@ def _column_positions(
     ordering: Ordering,
     sizes: dict[str, tuple[float, float]],
     metrics: LayoutMetrics,
+    *,
+    has_lanes: bool,
 ) -> list[float]:
-    left = metrics.pool_origin_x + (metrics.lane_header_width + metrics.lane_padding)
+    # A pool with lanes renders *two* vertical caption bands, the pool's and
+    # the lane's; content that starts after only one of them collides with the
+    # lane caption.
+    captions = metrics.lane_header_width * (2 if has_lanes else 1)
+    left = metrics.pool_origin_x + captions + metrics.lane_padding + _label_overhang(
+        graph, ordering, sizes, metrics
+    )
     positions: list[float] = []
     for rank in range(len(ordering.ranks)):
         positions.append(left)
@@ -131,6 +141,33 @@ def _column_positions(
 # --------------------------------------------------------------------------- #
 # Lane bands
 # --------------------------------------------------------------------------- #
+
+
+def _label_overhang(
+    graph: LayeredGraph,
+    ordering: Ordering,
+    sizes: dict[str, tuple[float, float]],
+    metrics: LayoutMetrics,
+) -> float:
+    """How far the first column's labels stick out to the left of their shapes.
+
+    An event is 36px wide and its caption is drawn centred underneath it, so a
+    named start event reaches well past its own outline. Without this the first
+    caption lands on top of the lane caption.
+    """
+    if not ordering.ranks:
+        return 0.0
+    overhang = 0.0
+    for node_id in ordering.ranks[0]:
+        node = graph.model.get_node(node_id)
+        if node is None or not node.name:
+            continue
+        width = sizes.get(node_id, (0.0, 0.0))[0]
+        label_width = max(
+            30.0, min(metrics.label_max_width, len(node.name) * metrics.label_char_width)
+        )
+        overhang = max(overhang, (label_width - width) / 2)
+    return overhang
 
 
 def _cells(

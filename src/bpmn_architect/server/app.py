@@ -14,9 +14,8 @@ from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
-from starlette.requests import Request
 
 from bpmn_architect import __version__
 from bpmn_architect.server.routes import router
@@ -80,8 +79,10 @@ def create_app(
         def spa_root() -> FileResponse:
             return FileResponse(index)
 
-        @app.get("/{path:path}", include_in_schema=False)
-        def spa_fallback(request: Request, path: str) -> FileResponse | JSONResponse:
+        # response_model=None: the return type is a union of responses, which
+        # FastAPI would otherwise try to turn into a response schema.
+        @app.get("/{path:path}", include_in_schema=False, response_model=None)
+        def spa_fallback(path: str) -> Response:
             # Client-side routes must fall back to the shell; a missing API
             # path must still look like a missing API path.
             if path.startswith("api/"):

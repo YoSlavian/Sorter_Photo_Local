@@ -6,7 +6,8 @@ on:
   pull_request:
 
 jobs:
-  test:
+  engine:
+    name: Движок и API (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -14,7 +15,6 @@ jobs:
         python-version: ["3.10", "3.11", "3.12"]
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
@@ -37,3 +37,92 @@ jobs:
           python -m bpmn_architect build examples/invoice_approval.dsl -o /tmp/b.svg -f svg -q
           diff -q /tmp/a.svg docs/images/order_request.svg
           diff -q /tmp/b.svg docs/images/invoice_approval.svg
+
+      - name: The engine installs with no dependencies at all
+        run: |
+          python -m venv /tmp/bare
+          /tmp/bare/bin/pip install --quiet .
+          /tmp/bare/bin/python -c "
+          from bpmn_architect import generate
+          result = generate('Процесс начинается. Менеджер проверяет заявку. Процесс завершается.')
+          assert result.to_bpmn().startswith('<?xml'), 'bare install must still build a diagram'
+          print('bare install OK:', len(result.model), 'elements')
+          "
+
+  frontend:
+    name: Фронтенд
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install
+        working-directory: frontend
+        run: npm ci --no-audit --no-fund
+
+      - name: Lint
+        working-directory: frontend
+        run: npm run lint
+
+      - name: Type check
+        working-directory: frontend
+        run: npm run typecheck
+
+      - name: Test
+        working-directory: frontend
+        run: npm test
+
+      - name: Build
+        working-directory: frontend
+        run: npm run build
+
+      - name: Keep the built app for the end-to-end job
+        uses: actions/upload-artifact@v4
+        with:
+          name: studio-build
+          path: src/bpmn_architect/server/static
+          retention-days: 1
+
+  e2e:
+    name: Сквозной сценарий в браузере
+    runs-on: ubuntu-latest
+    needs: [engine, frontend]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: studio-build
+          path: src/bpmn_architect/server/static
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[studio]" playwright
+          playwright install --with-deps chromium
+
+      - name: Start the server
+        run: |
+          python -m uvicorn bpmn_architect.server.app:app --host 127.0.0.1 --port 8000 &
+          for _ in $(seq 1 30); do
+            curl -sf http://127.0.0.1:8000/api/health && break
+            sleep 1
+          done
+
+      - name: Run the scenario
+        run: python tests/e2e/studio.py --url http://127.0.0.1:8000
+
+      - name: Keep the screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: studio-screenshots
+          path: tests/e2e/screenshots
+          retention-days: 7

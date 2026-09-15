@@ -1,0 +1,16 @@
+**/node_modules
+**/__pycache__
+**/.pytest_cache
+**/.mypy_cache
+**/.ruff_cache
+**/*.egg-info
+.git
+.github
+dist
+build
+out
+src/bpmn_architect/server/static
+frontend/dist
+docs/images
+*.bpmn
+*.bpmn-project

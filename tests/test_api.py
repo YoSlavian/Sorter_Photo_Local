@@ -26,6 +26,39 @@ def diagram(client: TestClient) -> dict:
     return response.json()
 
 
+class TestSpaHosting:
+    """The app must boot with a built frontend present, not only without one."""
+
+    @pytest.fixture
+    def built(self, tmp_path):
+        assets = tmp_path / "assets"
+        assets.mkdir()
+        (assets / "index-abc.js").write_text("export {};", encoding="utf-8")
+        (tmp_path / "index.html").write_text(
+            "<!doctype html><title>Studio</title>", encoding="utf-8"
+        )
+        return TestClient(create_app(static_dir=tmp_path))
+
+    def test_the_shell_is_served_at_the_root(self, built):
+        response = built.get("/")
+        assert response.status_code == 200
+        assert "Studio" in response.text
+
+    def test_client_routes_fall_back_to_the_shell(self, built):
+        assert "Studio" in built.get("/some/deep/route").text
+
+    def test_assets_are_served(self, built):
+        assert built.get("/assets/index-abc.js").status_code == 200
+
+    def test_unknown_api_paths_stay_api_errors(self, built):
+        response = built.get("/api/nope")
+        assert response.status_code == 404
+        assert response.json() == {"detail": "Not Found"}
+
+    def test_the_api_still_works_with_the_shell_mounted(self, built):
+        assert built.get("/api/health").json()["status"] == "ok"
+
+
 class TestStatus:
     def test_health(self, client):
         assert client.get("/api/health").json()["status"] == "ok"
