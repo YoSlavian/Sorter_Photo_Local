@@ -43,6 +43,7 @@ from bpmn_architect.domain.ir import (
 from bpmn_architect.parsing import lexicon as lex
 from bpmn_architect.parsing.morphology import (
     capitalize_first,
+    from_genitive,
     looks_like_infinitive,
     looks_like_verb,
     nominalize,
@@ -119,6 +120,8 @@ _THEN_SPLIT_RE = re.compile(r",\s*(?:то|тогда)\s+|\s+then\s+|\s+—\s+|\s
 _CONJUNCTION_SPLIT_RE = re.compile(
     r",?\s+(?:а\s+)?(?:затем|потом|после\s+чего|далее|и|then|and|after\s+which)\s+", re.IGNORECASE
 )
+#: Start cues that leave their payload in the genitive case.
+_GENITIVE_CUE_RE = re.compile(r"(?:\bс|\bсо|\bот|\bиз)\s*$", re.IGNORECASE)
 _TITLE_PREFIX_RE = re.compile(
     r"^(?:процесс|название\s+процесса|бизнес-процесс|process|process\s+name)\s*[:—–-]\s*(?P<name>.+)$",
     re.IGNORECASE,
@@ -339,7 +342,7 @@ class NaturalLanguageParser:
 
         # 5. Process boundaries.
         if cue := lex.match_start(text):
-            self._append(self._make_start_event(cue.payload or text, stmt))
+            self._append(self._make_start_event(cue.payload or text, cue, stmt))
             return next_index
         if cue := lex.match_end(text):
             self._append(self._make_end_event(cue.payload, stmt))
@@ -568,9 +571,18 @@ class NaturalLanguageParser:
 
     # -- leaf elements -------------------------------------------------------
 
-    def _make_start_event(self, payload: str, stmt: _Statement) -> IREvent:
-        label = nominalize(clean_label(payload)) or _DEFAULT_NAMES[self._language]["start"]
-        actor, label = self._extract_actor(label)
+    def _make_start_event(self, payload: str, cue: lex.Cue, stmt: _Statement) -> IREvent:
+        # "начинается с заявки" puts the trigger in the genitive; the cue tells
+        # us so, and only then is the conversion unambiguous.
+        text = clean_label(payload)
+        label = (
+            from_genitive(text) if _GENITIVE_CUE_RE.search(cue.prefix) else nominalize(text)
+        ) or _DEFAULT_NAMES[self._language]["start"]
+        actor, remainder = self._extract_actor(label)
+        # "Клиент звонит" must not become an event called "Звонит": once the
+        # actor is removed, a single leftover word is not a usable event name.
+        if actor and len(remainder.split()) > 1:
+            label = remainder
         trigger, timer = lex.classify_event_trigger(label)
         return IREvent(
             text=capitalize_first(label) or _DEFAULT_NAMES[self._language]["start"],

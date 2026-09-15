@@ -24,6 +24,11 @@ dependencies = []
 
 [project.optional-dependencies]
 dev = ["pytest>=7.4", "mypy>=1.8", "ruff>=0.3"]
+# Model backends for the AI and hybrid interpretation modes. The core engine
+# works without any of them; deterministic mode has no dependencies at all.
+anthropic = ["anthropic>=0.40"]
+openai = ["openai>=1.40"]
+ai = ["anthropic>=0.40", "openai>=1.40"]
 
 [project.scripts]
 bpmn-architect = "bpmn_architect.cli:main"
@@ -57,3 +62,8 @@ python_version = "3.10"
 files = ["src"]
 strict = true
 warn_unused_ignores = true
+
+# Model SDKs are optional extras; the core is expected to build without them.
+[[tool.mypy.overrides]]
+module = ["anthropic", "anthropic.*", "openai", "openai.*"]
+ignore_missing_imports = true

@@ -55,7 +55,7 @@ from bpmn_architect.parsing.lexicon import detect_language
 from bpmn_architect.parsing.morphology import capitalize_first
 from bpmn_architect.parsing.normalizer import Line, clean_label, read_lines
 
-__all__ = ["DslParser", "parse_dsl", "looks_like_dsl"]
+__all__ = ["DslParser", "parse_dsl", "looks_like_dsl", "render_dsl"]
 
 _LINE_RE = re.compile(
     r"""^(?P<keyword>[\wЀ-ӿ-]+)
@@ -476,3 +476,128 @@ def _collect_actors(sequence: IRSequence) -> list[str]:
 def parse_dsl(raw_text: str) -> IRProcess:
     """Convenience wrapper around :class:`DslParser`."""
     return DslParser().parse(raw_text)
+
+
+# --------------------------------------------------------------------------- #
+# Writing the DSL back out
+# --------------------------------------------------------------------------- #
+
+#: Preferred keyword per element type when writing the DSL out.  Spelled out
+#: rather than derived from the alias tables, so the output stays stable even
+#: if an alias is added.
+_ACTIVITY_KEYWORD = {
+    ActivityType.TASK: "task",
+    ActivityType.USER: "user",
+    ActivityType.SERVICE: "service",
+    ActivityType.MANUAL: "manual",
+    ActivityType.SCRIPT: "script",
+    ActivityType.SEND: "send",
+    ActivityType.RECEIVE: "receive",
+    ActivityType.BUSINESS_RULE: "rule",
+    ActivityType.SUB_PROCESS: "subprocess",
+    ActivityType.CALL: "call",
+}
+_GATEWAY_KEYWORD = {
+    BranchType.EXCLUSIVE: "xor",
+    BranchType.INCLUSIVE: "or",
+    BranchType.EVENT_BASED: "event-gateway",
+}
+#: Keywords that already imply a trigger, so it is not written as an option.
+_IMPLIED_TRIGGER = {
+    "timer": EventTrigger.TIMER,
+    "message": EventTrigger.MESSAGE,
+    "signal": EventTrigger.SIGNAL,
+}
+
+
+def _event_keyword(event: IREvent) -> str:
+    if event.position is EventPosition.START:
+        return "start"
+    if event.position is EventPosition.END:
+        return "end"
+    if event.position is EventPosition.INTERMEDIATE_THROW:
+        return "signal" if event.trigger is EventTrigger.SIGNAL else "throw"
+    if event.trigger is EventTrigger.TIMER:
+        return "timer"
+    if event.trigger is EventTrigger.MESSAGE:
+        return "message"
+    return "catch"
+
+
+def render_dsl(process: IRProcess) -> str:
+    """Serialise an IR tree back into the block DSL.
+
+    This makes the DSL a round-trip format rather than an input-only one, which
+    two features depend on: showing a language model the deterministic reading
+    of a text before asking it to improve on it, and letting a user inspect and
+    hand-correct what the parser understood.
+    """
+    lines: list[str] = []
+    if process.name:
+        lines.append(f"process: {process.name}")
+    if process.documentation:
+        lines.append(f"doc: {process.documentation}")
+    for lane in process.lane_names():
+        lines.append(f"lane: {lane}")
+    if lines:
+        lines.append("")
+    lines.extend(_render_sequence(process.root, 0))
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def _render_sequence(sequence: IRSequence, depth: int) -> list[str]:
+    indent = "  " * depth
+    lines: list[str] = []
+    for element in sequence:
+        if isinstance(element, IRBranch):
+            lines.append(
+                f"{indent}{_GATEWAY_KEYWORD[element.branch_type]}"
+                f"{_actor_suffix(element)}: {element.text}{_anchor_suffix(element)}"
+            )
+            for arm in element.arms:
+                keyword = "else" if arm.is_default else "case"
+                label = f" {arm.label}" if arm.label else ""
+                options = f" (condition={arm.condition})" if arm.condition else ""
+                lines.append(f"{indent}  {keyword}{label}{options}:")
+                body = _render_sequence(arm.body, depth + 2)
+                lines.extend(body or [f"{indent}    task: -"])
+        elif isinstance(element, IRParallel):
+            lines.append(f"{indent}and:")
+            for branch in element.branches:
+                lines.append(f"{indent}  branch:")
+                body = _render_sequence(branch, depth + 2)
+                lines.extend(body or [f"{indent}    task: -"])
+        elif isinstance(element, IRGoto):
+            target = element.target or element.anchor or ""
+            lines.append(f"{indent}goto: {target}")
+        elif isinstance(element, IREvent):
+            keyword = _event_keyword(element)
+            options = _event_options(element, keyword)
+            lines.append(
+                f"{indent}{keyword}{_actor_suffix(element)}: {element.text}"
+                f"{options}{_anchor_suffix(element)}"
+            )
+        elif isinstance(element, IRActivity):
+            keyword = _ACTIVITY_KEYWORD.get(element.activity_type, "task")
+            lines.append(
+                f"{indent}{keyword}{_actor_suffix(element)}: {element.text}"
+                f"{_anchor_suffix(element)}"
+            )
+    return lines
+
+
+def _event_options(event: IREvent, keyword: str) -> str:
+    options: list[str] = []
+    if event.timer:
+        options.append(f"timer={event.timer}")
+    elif event.trigger is not EventTrigger.NONE and _IMPLIED_TRIGGER.get(keyword) is not event.trigger:
+        options.append(event.trigger.value)
+    return f" ({', '.join(options)})" if options else ""
+
+
+def _actor_suffix(element: IRElement) -> str:
+    return f"[{element.actor}]" if element.actor else ""
+
+
+def _anchor_suffix(element: IRElement) -> str:
+    return f" @{element.anchor}" if element.anchor else ""

@@ -29,6 +29,7 @@ __all__ = [
     "looks_like_verb",
     "looks_like_infinitive",
     "nominalize",
+    "from_genitive",
     "to_nominative_object",
 ]
 
@@ -375,6 +376,57 @@ def normalize_actor(actor: str) -> str:
 
 _GENITIVE_GERUND_RE = re.compile(r"^\w{5,}(?:ния|тия|сия)$", re.IGNORECASE)
 _PREPOSITIONAL_GERUND_RE = re.compile(r"^\w{5,}(?:нии|тии|сии)$", re.IGNORECASE)
+
+
+#: Genitive singular -> nominative, for feminine nouns whose ending is
+#: unambiguous *in a genitive position* ("начинается с заявки" -> "заявка").
+#: Outside that position "-и"/"-ы" would be a nominative plural, which is why
+#: this is a separate function rather than part of :func:`nominalize`.
+_GENITIVE_NOUN_RULES = (
+    ("ии", "ия"),
+    ("жи", "жа"),
+    ("чи", "ча"),
+    ("ши", "ша"),
+    ("щи", "ща"),
+    ("ки", "ка"),
+    ("ги", "га"),
+    ("хи", "ха"),
+    ("ты", "та"),
+    ("ды", "да"),
+    ("ны", "на"),
+    ("сы", "са"),
+    ("лы", "ла"),
+    ("мы", "ма"),
+    ("ры", "ра"),
+    ("вы", "ва"),
+    ("зы", "за"),
+    ("бы", "ба"),
+    ("пы", "па"),
+)
+
+
+def from_genitive(phrase: str) -> str:
+    """Rewrite a phrase that stands in the genitive as a nominative subject.
+
+    Only safe where the grammar already forces the genitive - after "с", "от",
+    "из" - which is the one place it is called from.
+
+    >>> from_genitive("заявки от клиента")
+    'заявка от клиента'
+    """
+    stripped = phrase.strip()
+    if not stripped:
+        return stripped
+    nominalized = nominalize(stripped)
+    if nominalized != stripped:
+        return nominalized  # a gerund: "получения" -> "получение"
+    head, _, tail = stripped.partition(" ")
+    lowered = head.casefold()
+    for ending, replacement in _GENITIVE_NOUN_RULES:
+        if lowered.endswith(ending) and len(lowered) > len(ending) + 2:
+            head = head[: -len(ending)] + replacement
+            break
+    return f"{head} {tail}".strip()
 
 
 def nominalize(phrase: str) -> str:

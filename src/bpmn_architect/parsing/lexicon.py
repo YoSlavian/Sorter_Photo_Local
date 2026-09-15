@@ -52,6 +52,17 @@ class Cue:
     payload: str
     span: tuple[int, int]
 
+    @property
+    def prefix(self) -> str:
+        """The cue wording itself, without the payload it introduces.
+
+        Callers need this to see *how* the payload was introduced - "начинается
+        с" puts it in the genitive, "начинается когда" does not.
+        """
+        if not self.payload or not self.keyword.endswith(self.payload):
+            return self.keyword
+        return self.keyword[: len(self.keyword) - len(self.payload)]
+
 
 def _cue(match: re.Match[str] | None, group: int = 0) -> Cue | None:
     if match is None:
