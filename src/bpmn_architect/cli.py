@@ -102,10 +102,22 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+#: Tried in order. Process descriptions are routinely written in Notepad on a
+#: Russian Windows, which still saves cp1251 in older builds and adds a BOM in
+#: newer ones - neither should end in a decoding traceback.
+_INPUT_ENCODINGS = ("utf-8-sig", "cp1251")
+
+
 def _read_input(path: Path) -> str:
     if str(path) == "-":
         return sys.stdin.read()
-    return path.read_text(encoding="utf-8")
+    data = path.read_bytes()
+    for encoding in _INPUT_ENCODINGS:
+        try:
+            return data.decode(encoding)
+        except UnicodeDecodeError:
+            continue
+    return data.decode("utf-8", errors="replace")
 
 
 def _options(args: argparse.Namespace) -> PipelineOptions:

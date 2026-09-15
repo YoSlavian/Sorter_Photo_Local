@@ -57,6 +57,21 @@ class TestBuild:
         main(["build", str(description), "-o", str(output), "--verbatim-names"])
         assert "Проверяет заявку" in output.read_text(encoding="utf-8")
 
+    def test_reads_utf8_with_bom(self, tmp_path):
+        source = tmp_path / "bom.txt"
+        source.write_bytes(DESCRIPTION.encode("utf-8-sig"))
+        output = tmp_path / "out.bpmn"
+        assert main(["build", str(source), "-o", str(output)]) == 0
+        assert "Обработка заявки" in output.read_text(encoding="utf-8")
+
+    def test_reads_legacy_windows_encoding(self, tmp_path):
+        # Notepad on a Russian Windows still produces cp1251 in older builds.
+        source = tmp_path / "cp1251.txt"
+        source.write_bytes(DESCRIPTION.encode("cp1251"))
+        output = tmp_path / "out.bpmn"
+        assert main(["build", str(source), "-o", str(output)]) == 0
+        assert "Проверить заявку" in output.read_text(encoding="utf-8")
+
     def test_missing_file_is_reported(self, capsys):
         assert main(["build", "nope.txt"]) == 2
         assert "file not found" in capsys.readouterr().err
