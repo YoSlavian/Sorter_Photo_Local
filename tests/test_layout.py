@@ -28,6 +28,15 @@ class TestSeparationSolver:
     def test_handles_an_empty_column(self):
         assert place_with_separation([], [], 40, 0, 100) == []
 
+    def test_keeps_a_stretched_stack_inside_the_band(self):
+        # A node pulled towards a neighbour in another lane used to drag the
+        # whole stack past the bottom of its own band: the stack is wider than
+        # the minimum separation, so shifting it rigidly could not repair it.
+        centers = place_with_separation([144, 392], [0, 80], 40, 104, 304)
+        assert centers[0] - 0 >= 104 - 1e-9
+        assert centers[-1] + 40 <= 304 + 1e-9
+        assert centers[1] - centers[0] >= 80 - 1e-9
+
 
 class TestLayoutInvariants:
     def test_no_two_elements_overlap(self, example):

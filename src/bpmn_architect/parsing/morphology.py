@@ -40,6 +40,13 @@ __all__ = [
 #: Third person singular -> infinitive, for verbs common in business processes.
 _RU_VERBS: dict[str, str] = {
     "проверяет": "проверить",
+    "сообщает": "сообщить",
+    "спрашивает": "спросить",
+    "называет": "назвать",
+    "тянет": "тянуть",
+    "вытягивает": "вытянуть",
+    "берет": "взять",
+    "берёт": "взять",
     "перепроверяет": "перепроверить",
     "согласовывает": "согласовать",
     "согласует": "согласовать",
@@ -211,7 +218,7 @@ _RU_SUFFIX_RULES = (
 
 _RU_VERB_ENDINGS = (
     "ирует", "ует", "яет", "ает", "ивает", "ывает", "ит", "ет", "ёт",
-    "ают", "яют", "уют", "ют", "ат", "ят", "ится", "ется", "ются", "ятся",
+    "ают", "яют", "уют", "ют", "ат", "ят", "ится", "ется", "ётся", "ются", "ятся",
 )
 
 _CYRILLIC = re.compile(r"[А-Яа-яЁё]")
@@ -328,6 +335,10 @@ def _en_to_infinitive(word: str) -> str | None:
 # --------------------------------------------------------------------------- #
 
 
+#: Punctuation that clings to a word without being part of it.
+_CLINGING_PUNCT = ".,;:!?)("
+
+
 def to_infinitive(phrase: str) -> str:
     """Rewrite a third-person phrase as an infinitive one.
 
@@ -346,12 +357,18 @@ def to_infinitive(phrase: str) -> str:
     if not stripped:
         return stripped
     head, _, tail = stripped.partition(" ")
-    infinitive = _ru_to_infinitive(head) if _is_cyrillic(head) else _en_to_infinitive(head)
+    # "спрашивает, необходимо ли время" - the comma belongs to the sentence,
+    # not to the verb, and would otherwise hide a form we know.
+    core = head.rstrip(_CLINGING_PUNCT)
+    trailing = head[len(core) :]
+    if not core:
+        return stripped
+    infinitive = _ru_to_infinitive(core) if _is_cyrillic(core) else _en_to_infinitive(core)
     if infinitive is None:
         return stripped
-    if head.isupper():
+    if core.isupper():
         infinitive = infinitive.upper()
-    return f"{infinitive} {tail}".strip()
+    return f"{infinitive}{trailing} {tail}".strip()
 
 
 _ARTICLES = frozenset({"the", "a", "an"})
@@ -405,6 +422,20 @@ _GENITIVE_NOUN_RULES = (
 )
 
 
+#: Masculine triggers whose genitive only differs by a final vowel.  A general
+#: rule would be wrong as often as right ("звонка" -> "звонок", not "звонк"),
+#: so the frequent ones are listed instead of guessed.
+_GENITIVE_MASCULINE = {
+    "входа": "вход", "выхода": "выход", "прихода": "приход", "приезда": "приезд",
+    "звонка": "звонок", "заказа": "заказ", "запроса": "запрос", "отказа": "отказ",
+    "договора": "договор", "документа": "документ", "платежа": "платёж",
+    "сигнала": "сигнал", "отчета": "отчет", "отчёта": "отчёт", "старта": "старт",
+    "факта": "факт", "визита": "визит", "осмотра": "осмотр", "ввода": "ввод",
+    "возврата": "возврат", "сбоя": "сбой", "инцидента": "инцидент",
+    "письма": "письмо", "звонока": "звонок",
+}
+
+
 def from_genitive(phrase: str) -> str:
     """Rewrite a phrase that stands in the genitive as a nominative subject.
 
@@ -422,6 +453,8 @@ def from_genitive(phrase: str) -> str:
         return nominalized  # a gerund: "получения" -> "получение"
     head, _, tail = stripped.partition(" ")
     lowered = head.casefold()
+    if lowered in _GENITIVE_MASCULINE:
+        return f"{_GENITIVE_MASCULINE[lowered]} {tail}".strip()
     for ending, replacement in _GENITIVE_NOUN_RULES:
         if lowered.endswith(ending) and len(lowered) > len(ending) + 2:
             head = head[: -len(ending)] + replacement

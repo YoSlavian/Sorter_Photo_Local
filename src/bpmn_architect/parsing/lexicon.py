@@ -112,7 +112,9 @@ START_RE = re.compile(
 
 END_RE = re.compile(
     r"""(?:
-        (?:процесс|процедура|сценарий)\s+(?:завершается|заканчивается|окончен|завершен|завершён|закрывается|прерывается)
+        (?:процесс|процедура|сценарий)\s+(?:"[^"]{1,60}"\s+)?(?:успешно\s+|неуспешно\s+)?
+        (?:завершается|заканчивается|окончен|окончена|завершен|завершён|завершена|закрывается|прерывается)
+        (?:\s+(?:успешно|неуспешно))?
       | (?:конец|завершение|окончание)\s+процесса
       | на\s+этом\s+процесс\w*\s*\w*
       | (?:the\s+)?process\s+(?:ends|is\s+complete|is\s+completed|completes|finishes|terminates)
@@ -315,6 +317,12 @@ def arm_polarity(label: str) -> bool | None:
 # --------------------------------------------------------------------------- #
 
 ROLE_STEMS: tuple[str, ...] = (
+    # Education and public services turn up as often as commerce in process
+    # descriptions, and a missing role stem costs the whole swimlane.
+    "преподавател", "студент", "учител", "ученик", "слушател", "аспирант",
+    "экзаменатор", "декан", "заведующ", "куратор", "методист", "секретариат",
+    "врач", "пациент", "медсестр", "регистратор", "инспектор", "заявител",
+    "абитуриент", "соискател", "работодател", "гражданин", "посетител",
     "менеджер", "бухгалтер", "бухгалтери", "юрист", "сотрудник", "специалист",
     "руководител", "директор", "начальник", "оператор", "администратор", "админ",
     "клиент", "заказчик", "покупател", "поставщик", "подрядчик", "партнер", "партнёр",
@@ -332,6 +340,8 @@ ROLE_STEMS: tuple[str, ...] = (
     "warehouse", "cashier", "salesperson", "consultant", "secretary", "assistant",
     "owner", "coordinator", "dispatcher", "controller", "auditor", "reviewer",
     "approver", "applicant", "requester",
+    "teacher", "student", "lecturer", "examiner", "professor", "doctor",
+    "patient", "citizen", "visitor", "inspector",
 )
 
 _ROLE_STEM_SET = frozenset(ROLE_STEMS)

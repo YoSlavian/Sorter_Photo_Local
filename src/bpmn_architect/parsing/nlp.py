@@ -142,8 +142,56 @@ _ADVERBS = frozenset(
     }
 )
 _PREPOSITIONS = frozenset(
-    {"с", "со", "между", "перед", "над", "под", "за", "вместе", "рядом", "по", "к", "ко"}
+    {
+        "с", "со", "между", "перед", "над", "под", "за", "вместе", "рядом",
+        "по", "к", "ко", "от", "ото", "из", "изо", "для", "при", "о", "об",
+        "обо", "у", "до", "без", "через", "про", "в", "во", "на",
+    }
 )
+#: Pronouns that stand in for the actor named in an earlier sentence.
+_PRONOUN_SUBJECTS = frozenset(
+    {"он", "она", "оно", "они", "he", "she", "they", "it"}
+)
+#: Pronouns in an oblique case: the clause describes something done *to* them,
+#: so the actor stays whoever acted last ("ему дается доп. время").
+_PRONOUN_OBJECTS = frozenset({"ему", "ей", "им", "ним", "ней", "him", "her", "them"})
+#: Impersonal verbs that merely announce that something takes place; the noun
+#: phrase after them is the step ("происходит проверка" -> "Проверка").
+_IMPERSONAL_VERBS = frozenset(
+    {
+        "происходит", "происходят", "выполняется", "выполняются", "осуществляется",
+        "осуществляются", "производится", "производятся", "проводится", "проводятся",
+        "ведется", "ведётся", "идет", "идёт", "начинается", "takes", "occurs", "happens",
+    }
+)
+#: Verb-initial passives ("дается доп. время"): the description never names who
+#: acts, so the step is rewritten as the action itself.
+_PASSIVE_ACTIONS = {
+    "дается": "дать", "даётся": "дать", "предоставляется": "предоставить",
+    "выдается": "выдать", "выдаётся": "выдать", "назначается": "назначить",
+    "начисляется": "начислить", "формируется": "сформировать",
+    "составляется": "составить", "оформляется": "оформить",
+    "отправляется": "отправить", "направляется": "направить",
+    "рассматривается": "рассмотреть", "регистрируется": "зарегистрировать",
+}
+#: A parenthetical aside: commentary about the step, never part of its name.
+_ASIDE_RE = re.compile(r"\s*\(([^()]*)\)")
+#: Verbs saying that something is over, used together with the process name.
+_COMPLETION_RE = re.compile(
+    r"\b(?:заканчива\w*|оканчива\w*|завершае\w*|заверш[её]н\w*|окончен\w*|прерывае\w*)\b",
+    re.IGNORECASE,
+)
+#: "Бизнес-процесс «Сдача экзамена» начинается ..." names the process itself.
+_QUOTED_PROCESS_RE = re.compile(
+    r"(?:бизнес-)?процесс\w*\s+\"(?P<name>[^\"]{2,60})\"", re.IGNORECASE
+)
+#: "начинается с момента входа студента" - "момент" is scaffolding, the event
+#: is what follows it.
+_MOMENT_LEAD_RE = re.compile(
+    r"^(?:того\s+)?момент[аеу]?\s*,?\s*(?:когда\s+|как\s+)?", re.IGNORECASE
+)
+#: A comma that separates two finite clauses ("тянет билет, называет номер").
+_COMMA_SPLIT_RE = re.compile(r",\s+")
 
 
 # --------------------------------------------------------------------------- #
@@ -208,7 +256,7 @@ class NaturalLanguageParser:
             )
         )
         describes_an_action = any(
-            looks_like_verb(word) or looks_like_infinitive(word) for word in words
+            looks_like_verb(_bare(word)) or looks_like_infinitive(_bare(word)) for word in words
         )
         if not has_cue and 1 <= len(words) <= 8 and not describes_an_action:
             return capitalize_first(clean_label(first.text)), lines[1:]
@@ -332,7 +380,17 @@ class NaturalLanguageParser:
             self._open_parallel(cue, text, stmt)
             return next_index
 
-        # 4. Coordinated clauses: "менеджер отклоняет заявку и процесс
+        # 4. Parenthetical asides are commentary, not steps.  Stripping them
+        #    before the clause split keeps a conjunction *inside* the aside from
+        #    tearing the sentence apart.
+        body, asides = _strip_asides(text)
+        if asides and body:
+            self._emit_statement(_replace_text(stmt, body))
+            for aside in asides:
+                self._absorb_aside(aside, stmt)
+            return next_index
+
+        # 5. Coordinated clauses: "менеджер отклоняет заявку и процесс
         #    завершается" is a step followed by an end event, not one element.
         clauses = self._split_clauses(text)
         if len(clauses) > 1:
@@ -340,15 +398,20 @@ class NaturalLanguageParser:
                 self._emit_statement(_replace_text(stmt, clause))
             return next_index
 
-        # 5. Process boundaries.
+        # 6. Process boundaries.
         if cue := lex.match_start(text):
             self._append(self._make_start_event(cue.payload or text, cue, stmt))
             return next_index
         if cue := lex.match_end(text):
             self._append(self._make_end_event(cue.payload, stmt))
             return next_index
+        if self._ends_the_process(text):
+            # "для студента этот экзамен заканчивается" - the subject is the
+            # process this description is about, so the flow stops here.
+            self._append(self._make_end_event("", stmt))
+            return next_index
 
-        # 6. Loops / jumps.
+        # 7. Loops / jumps.
         if cue := lex.match_goto(text):
             self._append(
                 IRGoto(
@@ -360,7 +423,7 @@ class NaturalLanguageParser:
             )
             return next_index
 
-        # 7. Waiting and catching events.
+        # 8. Waiting and catching events.
         if cue := lex.match_wait(text):
             self._append(self._make_catch_event(cue.payload or text, stmt))
             return next_index
@@ -370,10 +433,38 @@ class NaturalLanguageParser:
                 self._emit_statement(_replace_text(stmt, cue.payload))
             return next_index
 
-        # 8. Plain steps.
+        # 9. Plain steps.
         for element in self._make_activities(text, stmt):
             self._append(element)
         return next_index
+
+    def _absorb_aside(self, aside: str, stmt: _Statement) -> None:
+        """File a parenthetical remark where it belongs.
+
+        An aside that says the process is over is a real end event; anything
+        else documents the step it was attached to, so the wording survives in
+        ``bpmn:documentation`` without cluttering the diagram.
+        """
+        if lex.match_end(aside) or self._ends_the_process(aside):
+            self._append(self._make_end_event("", stmt))
+            return
+        items = self._stack[-1].sequence.items
+        if not items:
+            return
+        element = items[-1]
+        element.source = f"{element.source} [{aside}]" if element.source else aside
+
+    def _ends_the_process(self, text: str) -> bool:
+        """True when ``text`` says that *this* process is finished.
+
+        Descriptions rarely repeat the words "процесс завершается"; they name
+        the thing that ends ("этот экзамен заканчивается").  Matching the
+        subject against the process name is what tells the two apart.
+        """
+        if not _COMPLETION_RE.search(text):
+            return False
+        name_stems = _stems(self._process.name)
+        return bool(name_stems and name_stems & _stems(text))
 
     def _close_blocks(self, indent: int) -> None:
         while len(self._stack) > 1 and self._stack[-1].open_indent >= indent:
@@ -389,6 +480,36 @@ class NaturalLanguageParser:
 
     def _open_condition(self, payload: str, stmt: _Statement) -> None:
         condition, positive, negative = self._split_condition(payload)
+
+        # "Если X, то A. Если не X, то B." is one decision written as two
+        # sentences - by far the most common way people describe a branch in
+        # prose. Treating each sentence as its own gateway is the single
+        # biggest source of wrong structure, so a condition that continues the
+        # decision immediately before it extends that gateway instead.
+        continued = self._decision_to_continue(condition)
+        if continued is not None:
+            frame = _Frame(
+                sequence=IRSequence(),
+                open_indent=stmt.indent,
+                kind="branch",
+                branch=continued,
+                actor=self._current_actor(),
+            )
+            self._stack.append(frame)
+            complementary = self._is_complement(continued, condition)
+            self._open_arm(
+                frame,
+                self._arm_label_for(continued, condition),
+                condition=condition,
+                default=complementary,
+            )
+            if positive:
+                self._emit_statement(_replace_text(stmt, positive))
+            if negative:
+                self._open_arm(frame, self._negative_label(), default=True)
+                self._emit_statement(_replace_text(stmt, negative))
+            return
+
         branch = IRBranch(
             text=self._as_question(condition),
             actor=self._current_actor(),
@@ -414,6 +535,61 @@ class NaturalLanguageParser:
                 self._open_arm(frame, self._positive_label(), condition=condition)
             self._open_arm(frame, self._negative_label(), default=True)
             self._emit_statement(_replace_text(stmt, negative))
+
+    def _decision_to_continue(self, condition: str) -> IRBranch | None:
+        """The gateway this condition belongs to, if it continues one.
+
+        Only the immediately preceding sibling qualifies: once another step has
+        intervened, a new "Если" starts a new decision.
+        """
+        items = self._stack[-1].sequence.items
+        previous = items[-1] if items else None
+        if not isinstance(previous, IRBranch):
+            return None
+        if previous.branch_type is not BranchType.EXCLUSIVE:
+            return None
+        if not previous.arms or len(previous.arms) > 3:
+            return None
+        if any(arm.is_default for arm in previous.arms):
+            return None
+        first = _first_condition(previous)
+        if not first or not condition:
+            return None
+
+        negated_before = _is_negated(first)
+        negated_now = _is_negated(condition)
+        context = " ".join(
+            [first, *(element.text for arm in previous.arms for element in arm.body)]
+        )
+        if negated_before != negated_now:
+            # One says X, the other not-X: complementary as long as they are
+            # about the same thing at all.
+            return previous if _shares_topic(condition, context) else None
+        # Both stated positively ("согласен" / "хочет апеллировать"): only when
+        # they describe alternatives for the same subject.
+        return previous if _same_subject(condition, first) else None
+
+    def _is_complement(self, branch: IRBranch, condition: str) -> bool:
+        """Does this condition answer the gateway's question the other way?
+
+        Only a decision that still has a single arm can be completed this way:
+        once two outcomes are on the gateway, a further condition is a third
+        alternative, not the missing half of a yes/no pair.
+        """
+        if len(branch.arms) != 1:
+            return False
+        return _is_negated(condition) != _is_negated(_first_condition(branch))
+
+    def _arm_label_for(self, branch: IRBranch, condition: str) -> str:
+        """Label for an arm added to an existing decision."""
+        if self._is_complement(branch, condition):
+            # The arm already on the gateway answers "yes" - whichever of the
+            # two sentences carried the negation - so this one answers "no".
+            return self._negative_label()
+        # A parallel alternative ("согласен" / "хочет апеллировать") is not a
+        # yes/no answer; naming it after its own condition also keeps two arms
+        # of one gateway from reading identically.
+        return capitalize_first(clean_label(condition))[:40]
 
     def _open_question(self, text: str, stmt: _Statement) -> None:
         """Open a decision declared by a header line or an explicit question.
@@ -572,9 +748,10 @@ class NaturalLanguageParser:
     # -- leaf elements -------------------------------------------------------
 
     def _make_start_event(self, payload: str, cue: lex.Cue, stmt: _Statement) -> IREvent:
+        self._adopt_process_name(stmt.text[: cue.span[0]])
         # "начинается с заявки" puts the trigger in the genitive; the cue tells
         # us so, and only then is the conversion unambiguous.
-        text = clean_label(payload)
+        text = _MOMENT_LEAD_RE.sub("", clean_label(payload))
         label = (
             from_genitive(text) if _GENITIVE_CUE_RE.search(cue.prefix) else nominalize(text)
         ) or _DEFAULT_NAMES[self._language]["start"]
@@ -593,6 +770,17 @@ class NaturalLanguageParser:
             line=stmt.line,
             source=stmt.text,
         )
+
+    def _adopt_process_name(self, prefix: str) -> None:
+        """Take the process name from the sentence that opens the description.
+
+        "Бизнес-процесс «Сдача экзамена» начинается с ..." names the process in
+        passing; a heading is not the only place a description states it.
+        """
+        if self._process.name:
+            return
+        if match := _QUOTED_PROCESS_RE.search(prefix):
+            self._process.name = capitalize_first(clean_label(match.group("name")))
 
     def _make_end_event(self, payload: str, stmt: _Statement) -> IREvent:
         label = clean_label(payload)
@@ -647,7 +835,11 @@ class NaturalLanguageParser:
 
     def _make_activities(self, text: str, stmt: _Statement) -> list[IRActivity]:
         body = lex.strip_leading_connective(text)
+        body, pronoun_subject = _resolve_impersonal(body)
         actor, remainder = self._extract_actor(body)
+        if actor is None and pronoun_subject:
+            # "он тянет билет" points back at whoever the decision is about.
+            actor = self._condition_actor()
         if actor:
             self._last_actor = actor
         effective_actor = actor or self._current_actor()
@@ -681,11 +873,36 @@ class NaturalLanguageParser:
         if not self.options.split_conjoined_actions:
             return [text]
         parts = [part.strip() for part in _CONJUNCTION_SPLIT_RE.split(text) if part.strip()]
+        parts = [fragment for part in parts for fragment in self._split_on_commas(part)]
         if len(parts) < 2:
             return [text]
         if all(self._is_actionable(part) for part in parts):
             return parts
         return [text]
+
+    def _split_on_commas(self, text: str) -> list[str]:
+        """Split "тянет билет, называет номер" into two steps.
+
+        Only a comma followed by a finite verb separates clauses; the far more
+        common "сообщает, что ..." and "спрашивает, необходимо ли ..." keep
+        their subordinate clause, which is part of the step, not another one.
+        """
+        parts = [part.strip() for part in _COMMA_SPLIT_RE.split(text) if part.strip()]
+        if len(parts) < 2:
+            return [text]
+        merged = [parts[0]]
+        for part in parts[1:]:
+            words = part.split()
+            starts_a_clause = (
+                len(words) > 1
+                and looks_like_verb(_bare(words[0]))
+                and not looks_like_verb(_bare(merged[-1].split()[-1]))
+            )
+            if starts_a_clause:
+                merged.append(part)
+            else:
+                merged[-1] = f"{merged[-1]}, {part}"
+        return merged
 
     def _is_actionable(self, fragment: str) -> bool:
         if any(
@@ -693,13 +910,32 @@ class NaturalLanguageParser:
             for matcher in (lex.match_goto, lex.match_wait, lex.match_end, lex.match_start)
         ):
             return True
+        if self._ends_the_process(fragment):
+            return True
         words = fragment.split()
-        return any(looks_like_verb(word) for word in words[:2])
+        return any(looks_like_verb(_bare(word)) for word in words[:2])
 
     # -- actors --------------------------------------------------------------
 
     def _current_actor(self) -> str | None:
         return self._last_actor if self.options.inherit_actor else None
+
+    def _condition_actor(self) -> str | None:
+        """The role the enclosing decision is about.
+
+        "Если студент не готов, он отвечает" - the pronoun refers to the
+        condition's subject, which is not necessarily whoever acted last.
+        """
+        if not self.options.inherit_actor:
+            return None
+        for frame in reversed(self._stack):
+            if frame.kind != "branch" or frame.branch is None:
+                continue
+            for word in _first_condition(frame.branch).split():
+                bare = _bare(word)
+                if lex.is_role_word(bare):
+                    return normalize_actor(bare)
+        return None
 
     def _extract_actor(self, text: str) -> tuple[str | None, str]:
         """Split a step into (actor, action).
@@ -730,12 +966,31 @@ class NaturalLanguageParser:
             if len(words) <= size:
                 continue
             head, tail = words[:size], words[size:]
-            if not looks_like_verb(tail[0]):
+            # "преподаватель спрашивает, ..." - the comma is glued to the verb
+            # and would otherwise hide it.
+            if not looks_like_verb(_bare(tail[0])):
                 continue
+            # A role name never contains a preposition: "студент от
+            # преподавателя получает" names the student, not a three-word role.
+            for index, word in enumerate(head):
+                if word.casefold() in _PREPOSITIONS:
+                    head = head[:index]
+                    break
             while head and head[-1].casefold() in _ADVERBS:
                 head, tail = head[:-1], [*head[-1:], *tail]
             if head and any(lex.is_role_word(word) for word in head):
                 return normalize_actor(" ".join(head)), " ".join(tail)
+
+        # "Исходя из ответа преподаватель называет оценку": an adverbial preface
+        # may stand in front of the role.  What precedes the role describes the
+        # circumstances, not the action, so only the verb phrase is the label.
+        for position in range(1, min(len(words) - 1, 8)):
+            previous = words[position - 1].casefold()
+            word = _bare(words[position])
+            if previous in _PREPOSITIONS or _is_instrumental(word):
+                continue
+            if lex.is_role_word(word) and looks_like_verb(_bare(words[position + 1])):
+                return normalize_actor(word), " ".join(words[position + 1 :])
 
         if match := _BY_ACTOR_RE.search(stripped):
             actor = match.group("actor")
@@ -796,6 +1051,99 @@ def _split_once(pattern: re.Pattern[str], text: str) -> tuple[str, str]:
 def _is_instrumental(word: str) -> bool:
     lowered = word.casefold()
     return len(lowered) > 5 and lowered.endswith(_INSTRUMENTAL_ENDINGS)
+
+
+_NEGATION_RE = re.compile(r"(?:^|\s)(?:не|нет|без)\b|\bnot\b|\bno\b", re.IGNORECASE)
+_SUBJECT_STOP = frozenset(
+    {"если", "когда", "при", "в", "во", "на", "то", "тогда", "это", "такая", "такой", "if", "when"}
+)
+
+
+def _is_negated(condition: str) -> bool:
+    return bool(_NEGATION_RE.search(condition))
+
+
+def _first_condition(branch: IRBranch) -> str:
+    """The condition the decision was originally opened with."""
+    if branch.arms and branch.arms[0].condition:
+        return branch.arms[0].condition
+    return branch.text.rstrip("?")
+
+
+def _stems(text: str) -> set[str]:
+    words = re.findall(r"\w+", text.casefold())
+    return {
+        word[:4]
+        for word in words
+        if len(word) > 3 and word not in _SUBJECT_STOP and word not in _PREPOSITIONS
+    }
+
+
+def _shares_topic(condition: str, context: str) -> bool:
+    """Do the condition and the decision's context talk about the same thing?"""
+    left, right = _stems(condition), _stems(context)
+    return bool(left & right)
+
+
+def _same_subject(left: str, right: str) -> bool:
+    """Both conditions open with the same significant word."""
+    first_left = next(iter(_significant_words(left)), "")
+    first_right = next(iter(_significant_words(right)), "")
+    return bool(first_left) and first_left[:4] == first_right[:4]
+
+
+def _significant_words(text: str) -> list[str]:
+    return [
+        word
+        for word in re.findall(r"\w+", text.casefold())
+        if len(word) > 3 and word not in _SUBJECT_STOP and word not in _PREPOSITIONS
+    ]
+
+
+def _bare(word: str) -> str:
+    """A token without the punctuation that clings to it."""
+    return word.strip(".,;:!?()«»\"'")
+
+
+def _strip_asides(text: str) -> tuple[str, list[str]]:
+    """Separate a sentence from the remarks its author put in brackets."""
+    asides = [match.group(1).strip() for match in _ASIDE_RE.finditer(text)]
+    body = _ASIDE_RE.sub("", text).strip()
+    if "(" in body:
+        # An unclosed bracket - frequent in hand-written descriptions - opens a
+        # remark that simply runs to the end of the sentence.
+        head, _, tail = body.partition("(")
+        body, trailing = head.strip(), tail.strip()
+        if trailing:
+            asides.append(trailing)
+    return clean_label(body), [aside for aside in asides if aside]
+
+
+def _resolve_impersonal(text: str) -> tuple[str, bool]:
+    """Rewrite subject-less prose as an action; report a dropped pronoun.
+
+    Three surface forms hide the step behind scaffolding: a pronoun standing in
+    for the actor ("он тянет билет"), an impersonal announcement ("происходит
+    проверка") and a verb-initial passive ("дается доп. время").
+    """
+    words = text.split()
+    if not words:
+        return text, False
+    pronoun = False
+    head = _bare(words[0]).casefold()
+    if len(words) > 1 and looks_like_verb(_bare(words[1])):
+        if head in _PRONOUN_SUBJECTS:
+            pronoun = True
+            words = words[1:]
+        elif head in _PRONOUN_OBJECTS:
+            words = words[1:]
+        head = _bare(words[0]).casefold()
+    if len(words) > 1 and head in _IMPERSONAL_VERBS:
+        # The noun phrase after the verb *is* the step.
+        return " ".join(words[1:]), pronoun
+    if head in _PASSIVE_ACTIONS:
+        return " ".join([_PASSIVE_ACTIONS[head], *words[1:]]), pronoun
+    return " ".join(words), pronoun
 
 
 def _strip_dangling_preposition(text: str) -> str:

@@ -184,3 +184,108 @@ class TestOptions:
 def test_empty_input_produces_an_empty_process():
     process = parse_text("   \n\n")
     assert len(process.root) == 0
+
+
+class TestProse:
+    """Free-running prose: the way process descriptions are actually written.
+
+    Every case here comes from a real description of an exam procedure, which
+    states its decisions across sentence boundaries, drops subjects and keeps
+    half of its remarks in brackets.
+    """
+
+    def test_complementary_sentences_form_one_decision(self):
+        process = parse_text(
+            "Если студент допущен, преподаватель принимает ответ.\n"
+            "Если студент не допущен, преподаватель сообщает об отказе.\n"
+        )
+        branch = process.root.items[0]
+        assert isinstance(branch, IRBranch)
+        assert len(process.root) == 1  # one gateway, not two
+        assert [arm.label for arm in branch.arms] == ["Да", "Нет"]
+        assert branch.arms[1].is_default is True
+
+    def test_negated_sentence_first_still_labels_both_arms(self):
+        process = parse_text(
+            "Если не допустить студента, преподаватель сообщает об отказе.\n"
+            "Если студент допущен, преподаватель принимает ответ.\n"
+        )
+        branch = process.root.items[0]
+        assert isinstance(branch, IRBranch)
+        assert [arm.label for arm in branch.arms] == ["Да", "Нет"]
+
+    def test_two_positive_alternatives_keep_their_own_labels(self):
+        process = parse_text(
+            "Если студент согласен с оценкой, преподаватель выставляет оценку.\n"
+            "Если студент хочет апеллировать, преподаватель принимает апелляцию.\n"
+        )
+        branch = process.root.items[0]
+        assert isinstance(branch, IRBranch)
+        assert [arm.label for arm in branch.arms] == ["Да", "Студент хочет апеллировать"]
+
+    def test_unrelated_conditions_stay_separate_decisions(self):
+        process = parse_text(
+            "Если заявка корректна, менеджер регистрирует заявку.\n"
+            "Если склад загружен, логист переносит отгрузку.\n"
+        )
+        assert [type(item).__name__ for item in process.root] == ["IRBranch", "IRBranch"]
+
+    def test_parenthetical_remark_becomes_documentation(self):
+        process = parse_text("Преподаватель выставляет оценку (например, по десятибалльной шкале).")
+        activity = process.root.items[0]
+        assert activity.text == "Выставить оценку"
+        assert "десятибалльной" in activity.source
+
+    def test_remark_about_the_end_becomes_an_end_event(self):
+        process = parse_text(
+            'Бизнес-процесс "Сдача экзамена" начинается с момента входа студента.\n'
+            'Преподаватель выставляет оценку (процесс "Сдача экзамена" заканчивается).\n'
+        )
+        assert process.name == "Сдача экзамена"
+        assert process.root.items[0].text == "Вход студента"
+        assert process.root.items[-1].position is EventPosition.END
+
+    def test_the_process_ending_may_be_named_by_its_subject(self):
+        process = parse_text(
+            'Бизнес-процесс "Сдача экзамена" начинается с момента входа студента.\n'
+            "Преподаватель сообщает об отказе и для студента этот экзамен заканчивается.\n"
+        )
+        assert isinstance(process.root.items[-1], IREvent)
+        assert process.root.items[-1].position is EventPosition.END
+
+    def test_pronoun_subject_takes_the_role_from_the_condition(self):
+        process = parse_text(
+            "Преподаватель задаёт вопрос.\n"
+            "Если студент не готов отвечать, он берёт дополнительное время.\n"
+        )
+        branch = process.root.items[1]
+        assert isinstance(branch, IRBranch)
+        step = branch.arms[0].body.items[0]
+        assert step.text == "Взять дополнительное время"
+        assert step.actor == "Студент"
+
+    def test_impersonal_announcement_names_the_step_by_its_noun(self):
+        process = parse_text("Менеджер получает заявку.\nЗатем происходит проверка документов.")
+        assert process.root.items[1].text == "Проверка документов"
+
+    def test_verb_initial_passive_becomes_an_action(self):
+        process = parse_text("Преподаватель принимает ответ.\nЕму даётся дополнительное время.")
+        assert process.root.items[1].text == "Дать дополнительное время"
+
+    def test_role_after_an_adverbial_preface_is_still_the_actor(self):
+        process = parse_text("Исходя из ответа на вопрос преподаватель называет оценку.")
+        activity = process.root.items[0]
+        assert activity.text == "Назвать оценку"
+        assert activity.actor == "Преподаватель"
+
+    def test_comma_separates_two_clauses(self):
+        process = parse_text("Студент тянет билет, называет преподавателю его номер.")
+        assert [element.text for element in process.root] == [
+            "Тянуть билет",
+            "Назвать преподавателю его номер",
+        ]
+
+    def test_subordinate_clause_stays_part_of_its_step(self):
+        process = parse_text("Преподаватель сообщает студенту, что он не допущен к экзамену.")
+        assert len(process.root) == 1
+        assert process.root.items[0].text == "Сообщить студенту, что он не допущен к экзамену"

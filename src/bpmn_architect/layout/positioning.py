@@ -360,6 +360,14 @@ def place_with_separation(
     """
     if not desired:
         return []
+    # Pull the targets inside the band before solving.  The correction at the
+    # end can only move the stack *rigidly*, so a stack that is stretched - a
+    # node pulled far towards a neighbour in another lane - would otherwise be
+    # left hanging out of one end of its band.
+    desired = [
+        min(max(value, low + height / 2), max(low + height / 2, high - height / 2))
+        for value, height in zip(desired, heights, strict=True)
+    ]
     offsets = [0.0]
     for index in range(1, len(desired)):
         separation = (heights[index - 1] + heights[index]) / 2 + gap
