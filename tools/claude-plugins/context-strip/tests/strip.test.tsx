@@ -43,7 +43,7 @@ test('the band shows the fill and each used category', async ($, on) => {
   const run = (($ as any).command.run) as (e: unknown) => Promise<unknown>
   await run({ command: 'ctx', args: '', origin: 'user' })
   await run({ command: 'ctx', args: '', origin: 'user' })
-  for (const surface of ['terminal', 'desktop'] as const) {
+  for (const surface of ['terminal', 'desktop', 'vscode', 'mobile'] as const) {
     const ui = await $.ui.mount({ plugin: 'context-strip', surface, component: 'AbovePrompt', props: {} as never })
     expect(await ui.find({ type: 'Text', text: /ENGINE/ })).toBeUndefined()
     expect(await ui.find({ type: 'Text', text: /30%/ })).toBeDefined()
