@@ -1,0 +1,6 @@
+{
+  "name": "context-strip",
+  "version": "0.1.0",
+  "description": "A context-fill strip above the prompt, split by category as /context counts it",
+  "types": "./types/index.d.ts"
+}

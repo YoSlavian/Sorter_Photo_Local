@@ -1,0 +1,5 @@
+{
+  "name": "sorter-photo-local",
+  "owner": { "name": "YoSlavian" },
+  "plugins": [{ "name": "context-strip", "source": "./tools/claude-plugins/context-strip" }]
+}
